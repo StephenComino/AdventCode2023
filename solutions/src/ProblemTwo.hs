@@ -4,6 +4,7 @@ module ProblemTwo
 
 import Parsers
 import Data.Char
+import Data.Either
 import FileRead
 import Data.Monoid
 import Control.Applicative
@@ -11,8 +12,13 @@ import Control.Applicative
 someFunc :: IO ()
 someFunc = do
     lines <- readSampleFile "\\SampleInput\\ProblemTwo.txt"
-    print $  (fmap $ parse (parseGame 12 13 14)) lines
+    print $ sum $ fmap calculateAnswer $ (fmap $ parse (parseGame 12 13 14)) lines
+    --print $ (fmap $ parse (parseGame 12 13 14)) lines
 
+
+calculateAnswer :: Either a (String, String) -> Int
+calculateAnswer (Right ("",_)) = 0
+calculateAnswer (Right (answ, _)) = (read (answ) :: Int)
 
 parseGame :: Int -> Int -> Int -> Parser Char [Char]
 parseGame red green blue = do -- red, green, blue
@@ -44,33 +50,33 @@ parseSingleGame red green blue = do -- red, blue, green
     firstcolorName <- matchRed <|> matchBlue <|> matchGreen 
     semiColon <- many $ matchSemiColon
     result <- getRedValue red green blue (read (thisNumber) :: Int) firstcolorName
-    if ((length semiColon > 0) && (semiColon !! 0) == ";" && result /= "") then do parseSingleGame red green blue else do
-        if (result == "") then do (return "")
-            else do
-                comma <- many $ matchComma
-                if ((length comma > 0) && (comma !! 0) /= ",") then return $ "ok" else do
-                    _ <- many $ matchSpace
-                    
-                    thisNumber <- many $ matchAnyNumber
-                    _ <- many $ matchSpace
-                    firstcolorName <- matchRed <|> matchBlue <|> matchGreen
-                    semiColon <- many $ matchSemiColon
-                    result <- getRedValue red green blue (read (thisNumber) :: Int) firstcolorName
-                    if ((length semiColon > 0) && (semiColon !! 0) == ";" && result /= "") then do return $ "ok" else do
-                        if (result == "") then do (return "")
-                            else do
-                                comma <- many $ matchComma
-                                if ((length comma > 0) && (comma !! 0) /= ",") then return $ "ok" else do
-                                    _ <- many $ matchSpace
+    if (result == "") then do return "" else do
+        if ((length semiColon > 0) && (semiColon !! 0) == ";") then do return $ "ok" else do
+            comma <- many $ matchComma
 
-                                    thisNumber <- many $ matchAnyNumber
-                                    _ <- many $ matchSpace
-                                    firstcolorName <- matchRed <|> matchBlue <|> matchGreen
-                                    semiColon <- many $ matchSemiColon
-                                    result <- getRedValue red green blue (read (thisNumber) :: Int) firstcolorName
-                                    if (result == "") then do (return "")
-                                        else do
-                                            return $ "ok"
+            if (length semiColon == 0) && (length comma == 0) then do return $ "ok" else do
+                _ <- many $ matchSpace
+                
+                thisNumber <- many $ matchAnyNumber
+                _ <- many $ matchSpace
+                firstcolorName <- matchRed <|> matchBlue <|> matchGreen
+                semiColon <- many $ matchSemiColon
+                result <- getRedValue red green blue (read (thisNumber) :: Int) firstcolorName
+                if (result == "") then do return "" else do
+                    if ((length semiColon > 0) && (semiColon !! 0) == ";") then do return $ "ok" else do
+
+                        comma <- many $ matchComma
+                        if (length semiColon == 0) && (length comma == 0) then do return $ "ok" else do
+                            _ <- many $ matchSpace
+
+                            thisNumber <- many $ matchAnyNumber
+                            _ <- many $ matchSpace
+                            firstcolorName <- matchRed <|> matchBlue <|> matchGreen
+                            --semiColon <- many $ matchSemiColon
+                            result <- getRedValue red green blue (read (thisNumber) :: Int) firstcolorName
+                            if (result == "") then do (return "")
+                                else do
+                                    return $ "ok"
 
 parseMatchBeginning :: Parser Char [Char]
 parseMatchBeginning = do
